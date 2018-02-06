@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>GETTING STARTED WITH BRACKETS</title>
+<meta name="description" content="Matts Web Game">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="main.css">
+</head>
+<body>
+<div id="myCanvas">
+<div id="stalker"><img alt="Spooky1" id="sImage"></div>
+    <div id="stalker2"><img alt="Spooky2" id="hImage"></div>
+    <div id="stalker3"><img alt="Spooky3" id="cImage"></div>
+    <div id="monster"><img alt="Spooky4" id="mImage"></div>
+  <div id ="Player"><img alt="Hero" id="pImage"></div> 
+<div ><img alt="Cover" id="bush1" class="bushes"><img alt="Cover" id="bush2" class="bushes"></div>
+    <div id="Background"><img alt="Background" id="Back" ></div>
+    
+    </div>
+<div id=ScoreContainer><p id="Score">Score: 0</p></div><div id=Results1Container><p id="Results"></p></div>
+    <div id="Advice"><p>Controls:</p><p>Movement: Arrow Keys</p><p>Hide: X key</p> <p>Start: Space key</p></div>
+    <div id="Results2Container"><p id="Results2"></p></div>
+    <div id="LogoContainer"><img alt="Logo" id="Logo" ></div>
+
+</body>
+    
+    
+  
+    
+<script >
+  "use strict";
+
+    //Bool for gamestate
+let GameMode = "startScreen";
+    //Bool for whether player is hiding
+     let HideMode = false;
+    
+    //Player Character properties
+let Player =   document.querySelector("#Player");
+let PlayerX = 100;
+Player.style.left =  PlayerX + 'px';
+
+
+    //Player Image
+let Pimage = document.getElementById("pImage");
+Pimage.src = "img/Player.gif";
+    
+    //stalker ennemy properties
+let Stalker = document.querySelector("#stalker");    
+let StalkerX = 1090;
+Stalker.style.left =  StalkerX + 'px';
+let Stimer = 0;
+let Sattack = 1000;
+let Sspeed = 1;
+
+  //Hider ennemy properties
+let Hider = document.querySelector("#stalker2");    
+let HiderX = -200
+Hider.style.left =  HiderX + 'px'; 
+let Htimer = 0;
+let Hattack = 2000;
+let Hspeed = 0.5;
+let HiderY = -70;
+    
+    //Chaser ennemy properties
+let Chaser = document.querySelector("#stalker3");    
+let ChaserX = 1290
+Chaser.style.left =  ChaserX + 'px'; 
+let Ctimer = 0;
+let Cattack = 3000;
+let Cspeed = 1.5;
+let ChaserY = -70;
+    
+    //monster ennemy properties
+let Monster = document.querySelector("#monster");    
+let MonsterX = 400
+let MonsterY = 600;
+Monster.style.left =  MonsterX + 'px'; 
+let Mtimer = 0;
+let Mattack = 7000;
+let MGrab = false;
+    
+    
+      //stalker image
+let Simage = document.getElementById("sImage");
+Simage.src = "img/Stalker.gif";
+    
+    //Hider image
+let Himage = document.getElementById("hImage");
+Himage.src = "img/Hider.gif";  
+    
+    //Chaser Image
+let Cimage = document.getElementById("cImage");
+Cimage.src = "img/Hider.gif";  
+    
+    //Monster Image
+let Mimage = document.getElementById("mImage");
+Mimage.src = "img/Monster.gif"; 
+    
+    
+    
+//////background setup  
+    
+//Bush properties
+let bush1 = document.getElementById("bush1");
+bush1.src = "img/Bushes.gif";
+let bush2 = document.getElementById("bush2");
+bush2.src = "img/Bushes.gif";
+let bush1X = -1;
+let bush2X = 999;
+bush1.style.left = bush1X + 'px';
+bush2.style.left =  bush2X + 'px';
+    
+//Sky properties
+let Background = document.getElementById("Back");
+ Background.src = "img/Background.gif";
+    
+    
+//Score Properties
+let Score = 0;
+let score = document.getElementById("Score");
+let Incr = 0;
+    
+ //Logo Properties
+let Logo = document.getElementById("Logo");
+Logo.src = "img/Logo.png";
+
+
+   
+    
+    //Update variable, constantly updates the method inside of it
+    let update = setInterval(Update, 5);
+    
+    // Keyboard Controller method actiavetes each method inside of it if a corrlating key is pressed.
+    KeyboardController({
+      37:function() { MoveRight();},
+      39:function() { MoveLeft(); },
+      32:function() { StartButton();}
+       }, 1);
+    
+    
+    //Hide event changes the player sprite and positioning
+    
+    //Making the player hide
+     let Hide = (e) => { 
+   if(HideMode == false && e.keyCode == 88 && GameMode == "game"){
+        HideMode = true; 
+       Pimage.src ="img/Crouch.gif";
+      Pimage.style.width =  "300px";
+      Pimage.style.height = "470px";
+       Pimage.style.bottom = "-150px";
+        Pimage.style.left= "-120px";
+       Pimage.style.zIndex = "2";  
+      }
+
+    //Making the player stop hiding
+   else if(HideMode == true && e.keyCode == 88 && GameMode == "game"){
+         HideMode = false;
+         Pimage.src ="img/Player.gif";
+       Pimage.style.width = "270px";
+      Pimage.style.height = "350px"; 
+        Pimage.style.bottom = "-90px";
+      Pimage.style.left= "-105px";
+        Pimage.style.zIndex = "4";
+      }   
+}
+     
+     //Activating Hide Event function
+  window.addEventListener("keydown", Hide);
+    
+    
+    //Update function
+    function Update(){
+         if(GameMode == "game"){
+         GameStart();   
+         }
+         if(GameMode == "gameOver"){
+         GameOverScreen();       
+         }
+        
+        if(GameMode == "startScreen"){
+        StartScreen();
+        }
+    }
+    
+    
+    //This function makes the main game begin and plays all important methods
+    function GameStart(){
+    //Method for counting score
+    ScoreCheck();
+        
+    //Method for ennnemy movements
+StalkerAttack();
+   HiderAttack();
+ ChaserAttack();
+    MonsterAttack();
+        
+    //Method for tracking collisions
+     Collision();  
+        
+    //Manully updating ennemy/player sprite positions
+    Hider.style.left =  HiderX + 'px';
+    Stalker.style.left =  StalkerX + 'px';
+    Chaser.style.left =  ChaserX + 'px';    
+    Monster.style.left =  MonsterX + 'px';  
+    Player.style.left =  PlayerX + 'px'; 
+    Monster.style.bottom = MonsterY + "px";
+        
+    //Method for moving backgrounds
+    MoveBackground();
+    }  
+
+    
+    //Method for making stalker attack
+function StalkerAttack(){   
+    Stimer+=1;    
+    if(StalkerX > -100 && Stimer > Sattack){
+        if(HideMode == true){
+            StalkerX += -Sspeed + 0.6;
+        }
+        else{
+            StalkerX += -Sspeed
+        }
+  
+    }
+    else if(StalkerX < -99){
+        StalkerX = 1090; 
+        Stimer = 0;
+        Sattack = Rgen(700,1500);
+         if(Score < 10){
+             Sspeed = Rgen(10, 20) * 0.1;
+     
+        }
+        else if(Score < 16){
+            Sspeed = Rgen(15, 25) * 0.1;
+              
+        }
+        else if(Score < 24 ){
+            Sspeed = Rgen(20, 27) * 0.1;
+           
+        }
+        else if(Score < 30){
+             Sspeed = Rgen(15, 25) * 0.1;
+             
+        }
+        else{
+               Sspeed = Rgen(10, 30) * 0.1;
+             
+        }
+    }
+} 
+    
+    
+    
+    //method for making hider attack
+function HiderAttack(){   
+    Htimer+=1;    
+    if(HiderX < 1999 && Htimer > Hattack){
+        if(HideMode == true){
+               HiderX += Hspeed + 0.6; 
+        }
+        else{
+              HiderX += Hspeed;
+        }
+   
+    }
+    else if(HiderX > 1200){
+        HiderX = -200;       
+        Htimer = 0;
+        Hattack = Rgen(1000, 2500);
+        HiderY = -50;
+        Hspeed = Rgen(1, 8) * 0.1;       
+    }
+     if (PlayerX< HiderX + 250 &&
+         PlayerX + 100 > HiderX) {
+          HiderY += 0.5;
+        }
+        else{
+           HiderY -= 0.5; 
+        }
+    if(HiderY < -70){
+        HiderY = -70;
+    }
+    if(HiderY > 10){
+        HiderY = 10;
+    }
+   Himage.style.bottom = HiderY + "px";
+} 
+    
+    
+    //method for making chaser attack
+ function ChaserAttack(){   
+    Ctimer+=1;    
+    if(ChaserX > -100 && Ctimer > Cattack){
+        if(HideMode == true){
+           ChaserX += -Cspeed + 0.6; 
+        }
+        else{
+         ChaserX += -Cspeed;
+        }
+    }
+    else if(ChaserX < -99){
+        ChaserX = 1090; 
+        Ctimer = 0;
+        Cattack = Rgen(1000,2500);
+        Cspeed = Rgen(1, 5) * 0.1;       
+    }
+        if (PlayerX< ChaserX + 250 &&
+         PlayerX + 100 > ChaserX) {
+          ChaserY += 0.5;
+        }
+        else{
+           ChaserY -= 0.5; 
+        }
+    if(ChaserY < -70){
+        ChaserY = -70;
+    }
+    if(ChaserY > 10){
+      ChaserY = 10;
+    }
+   Cimage.style.bottom = ChaserY + "px";
+   
+} 
+    
+    
+    //method for making monster attack
+function MonsterAttack(){
+    Mtimer+=1;
+    if(PlayerX < MonsterX && MGrab == false){
+        if(HideMode == false){
+              MonsterX -= 0.5;
+        }
+        else{
+              MonsterX -= 0.3;
+        }
+      
+    }
+    if(PlayerX > MonsterX && MGrab == false){
+        if(HideMode == false){
+              MonsterX += 0.3;
+        }
+        else{
+              MonsterX += 0.4;
+        }
+    }
+    if(Mtimer > Mattack && MGrab == false){
+        MonsterY -= 0.2;
+   
+    }
+    if(MonsterY < 50 && MGrab == false){
+        MGrab = true;
+        Mtimer = 0;
+    }
+    
+    if(MGrab == true && Mtimer > 500){
+         MonsterY += 0.4;
+        
+    }
+    if(MonsterY > 599 && MGrab == true){
+        Mattack = Rgen(3700, 7500);
+        Mtimer = 0;
+        MGrab = false;
+    }
+}
+    
+    
+    //method for making collisions detect
+function Collision(){  
+        if (PlayerX< StalkerX + 80 &&
+         PlayerX + 50 > StalkerX && HideMode == false) {
+         GameMode = "gameOver";
+        }
+       if (PlayerX< HiderX + 150 &&
+         PlayerX + 50 > HiderX && HideMode == true) {
+         GameMode = "gameOver";
+        }
+     if (PlayerX< ChaserX + 150 &&
+         PlayerX + 50 > ChaserX && HideMode == true) {
+         GameMode = "gameOver";
+        }
+       if (PlayerX< MonsterX + 80 &&
+         PlayerX + 50 > MonsterX && HideMode == false
+          && MonsterY < 140) {
+         GameMode = "gameOver";
+        }
+    }  
+    
+    
+    //method for starting gameover screen
+function GameOverScreen(){
+    //All chaaracters are invisable
+    Stalker.style.opacity = 0;
+    Player.style.opacity = 0;
+    Hider.style.opacity = 0;
+    Chaser.style.opacity = 0;
+    Monster.style.opacity = 0;
+    bush1.style.opacity = 0;
+    bush2.style.opacity = 0;
+    
+    //Reseating character positions and properties
+    PlayerX = 60;
+    StalkerX = 1090;
+    ChaserX = -200;
+    HiderX = 1090;
+    MonsterY = 600;
+    Stimer = 0;
+    Htimer = 0;
+    Mtimer = 0;
+    Ctimer = 0;
+    Sattack = 1000;
+    Hattack = 2000;
+    Cattack = 2500;
+    Mattack = 7000;
+    Sspeed = 1
+    Hspeed = 1.5;
+    Cspeed = 2;
+    
+    //Removing score
+    score.innerHTML = "";
+    
+    //Adding gameover text
+    let Results = document.getElementById("Results");
+    Results.innerHTML = "You Died. Your Score: " + Score;
+     let Results2 = document.getElementById("Results2");
+    Results2.innerHTML = "Press space to restart";
+        
+    }
+    
+
+    //Method for restarting/starting main game
+   function StartButton(){
+  
+    if(GameMode == "gameOver" || GameMode == "startScreen" ){
+        //changing gamestate
+        GameMode = "game";   
+        
+        //Making characters visable
+        Stalker.style.opacity = 1;
+        Player.style.opacity = 1;
+        Hider.style.opacity = 1;
+        Chaser.style.opacity = 1;
+        Monster.style.opacity = 1;
+        bush1.style.opacity = 1;
+       bush2.style.opacity = 1;
+        
+        //Making logo invisable
+        Logo.style.opacity = 0;
+        
+        //reseting hide state
+        HideMode = false;
+        
+        //resetting player image
+         Pimage.src ="img/Player.gif";
+       Pimage.style.width = "270px";
+      Pimage.style.height = "350px"; 
+        Pimage.style.bottom = "-90px";
+      Pimage.style.left= "-105px";
+        Pimage.style.zIndex = "4";
+        
+        //resetting score
+        Score = 0;
+        score.innerHTML = "Score: " + Score;
+        
+        //removing gameover text
+        let Results = document.getElementById("Results");
+    Results.innerHTML = "";
+     let Results2 = document.getElementById("Results2");
+    Results2.innerHTML = "";
+        
+        //removing advice text
+    let Advice = document.getElementById("Advice");
+    Advice.innerHTML = "";
+        
+    }
+       
+} 
+    
+    
+    //Opening screen
+    function StartScreen(){
+        //making player visable (this isnt nessary, but fixes some bugs)
+    Player.style.opacity = 1;
+    bush1.style.opacity = 1;
+    bush2.style.opacity = 1;
+        
+    //Hiding score
+    score.innerHTML = "";  
+        
+    //Calling move background method
+    MoveBackground();
+    }
+    
+    
+    //method for moving right
+ function MoveRight() {  
+      if(PlayerX > 0 && HideMode == false){
+     PlayerX += -1.3;      
+       }
+               
+     } 
+    
+    //method for moving left
+function MoveLeft() { 
+    if(PlayerX < 880 && HideMode == false){
+    PlayerX += 1.3;
+    }
+                
+     }  
+
+    //method for moving background
+function MoveBackground(){
+    if(HideMode == false){
+    bush1X -= 0.8;
+    bush2X -= 0.8;
+    }
+   
+ 
+    if(bush1X < -988){
+        bush1X = 985;
+      
+    }
+     if(bush2X < -988){
+        bush2X = 985;
+    }
+    bush1.style.left = bush1X + 'px';
+   bush2.style.left =  bush2X + 'px';
+}
+    
+    //method for random generation (needed for ennemy spawn rate and speed)
+function Rgen(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min; 
+}
+
+// Keyboard controler method (code taken from an outside source)
+ function KeyboardController(keys, repeat) {
+  
+    let timer = {};
+     
+    document.onkeydown= function(event) {
+        let key= (event || window.event).keyCode;
+        if (!(key in keys))
+            return true;
+        if (!(key in timer)) {
+            timer[key]= null;
+            keys[key]();
+            if (repeat!==0)
+                timer[key]= setInterval(keys[key], repeat);
+        }
+        return false;
+    };
+
+    document.onkeyup= function(event) {
+       let key= (event || window.event).keyCode;
+        if (key in timer) {
+            if (timer[key]!==null)
+                clearInterval(timer[key]);
+            delete timer[key];
+        }
+    };
+
+
+    window.onblur= function() {
+        for (key in timer)
+            if (timer[key]!==null)
+                clearInterval(timer[key]);
+        timer= {};
+    };
+};
+    
+//method for incrementing score
+function ScoreCheck(){
+ Incr += 0.02;
+if(Incr > 10 && HideMode == false){
+Score += 1;
+score.innerHTML = "Score: " + Score;
+Incr = 0;
+}
+
+}
+    
+
+
+</script>
+</html>
